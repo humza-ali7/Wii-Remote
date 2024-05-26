@@ -29,30 +29,31 @@ void BLE::initBle()
     BLEService *pService = pServer->createService(SERVICE_UUID);
 
     // Create a BLE Characteristic
-    pCharacteristic = pService->createCharacteristic(
-                        CHARACTERISTIC_UUID,
-                        BLECharacteristic::PROPERTY_NOTIFY
-                    );                   
+    pButtonInputCharacteristic = pService->createCharacteristic (
+                                    BUTTON_INPUT_CHARACTERISTIC_UUID,
+                                    BLECharacteristic::PROPERTY_NOTIFY
+                                 );                   
 
     // Create a BLE Characteristic
-    pCharacteristic2 = pService->createCharacteristic(
-                        CHARACTERISTIC_UUID2,
-                        BLECharacteristic::PROPERTY_NOTIFY
-                    );                   
+    pSensorInputCharacteristic = pService->createCharacteristic (
+                                    SENSOR_INPUT_CHARACTERISTIC_UUID,
+                                    BLECharacteristic::PROPERTY_NOTIFY
+                                 );                   
 
     // Create a BLE Descriptor
 
     pDescr = new BLEDescriptor((uint16_t)0x2901);
-    pDescr->setValue("Wii Remote Inputs.");
-    pCharacteristic->addDescriptor(pDescr);
+    pDescr->setValue("Wii Remote Button Inputs.");
+    pButtonInputCharacteristic->addDescriptor(pDescr);
 
-    pBLE2902 = new BLE2902();
-    pBLE2902->setNotifications(true);
-    pCharacteristic->addDescriptor(pBLE2902);
+    pButtonInputNotifier = new BLE2902();
+    pButtonInputNotifier->setNotifications(true);
+    pButtonInputCharacteristic->addDescriptor(pButtonInputNotifier);
 
-    pBLE29021 = new BLE2902();
-    pBLE2902->setNotifications(true);
-    pCharacteristic->addDescriptor(pBLE29021);
+
+    pSensorInputNotifier = new BLE2902();
+    pSensorInputNotifier->setNotifications(true);
+    pSensorInputCharacteristic->addDescriptor(pSensorInputNotifier);
 
     // Start the service
     pService->start();
@@ -70,8 +71,38 @@ void BLE::updateButtonInputValue(uint32_t buttonInputs)
 {
     // notify changed value
     if (deviceConnected) {
-        pCharacteristic->setValue(buttonInputs);
-        pCharacteristic->notify();
+        pButtonInputCharacteristic->setValue(buttonInputs);
+        pButtonInputCharacteristic->notify();
+        delay(25);
+    }
+    // disconnecting
+    if (!deviceConnected && oldDeviceConnected) {
+        delay(500); // give the bluetooth stack the chance to get things ready
+        pServer->startAdvertising(); // restart advertising
+        Serial.println("start advertising");
+        oldDeviceConnected = deviceConnected;
+    }
+    // connecting
+    if (deviceConnected && !oldDeviceConnected) {
+        // do stuff here on connecting
+        oldDeviceConnected = deviceConnected;
+    }
+}
+
+void BLE::updateSensorInputValue(AccelData accelData, GyroData gyroData)
+{
+    if (deviceConnected) {
+        // Consolidate both sensor data into one characteristic
+        // to minimize characteristic overhead
+        uint8_t accelGyroDataBytes[ACCEL_GYRO_DATA_SIZE];
+
+        // Load the acceleration data
+        memcpy(accelGyroDataBytes, &accelData, ACCEL_DATA_STRUCT_SIZE);
+        // Load the gyroscope data
+        memcpy(accelGyroDataBytes + ACCEL_DATA_STRUCT_SIZE, &gyroData, GYRO_DATA_STRUCT_SIZE);
+        // Transmit the data
+        pSensorInputCharacteristic->setValue(accelGyroDataBytes, ACCEL_GYRO_DATA_SIZE);
+        pSensorInputCharacteristic->notify();
         delay(25);
     }
     // disconnecting

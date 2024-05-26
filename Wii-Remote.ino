@@ -9,7 +9,8 @@
 //#include "src/include/BLE.h"
 
 WiiRemote wiiRemote;
-//BLE ble{"Wii Remote"};
+// Set to 1 to print debug code
+#define DEBUG 0
 
 void setup()
 {
@@ -20,6 +21,7 @@ void setup()
 void loop()
 {
   wiiRemote.updateButtonInputs();
-  //Serial.println("here");
+  wiiRemote.updateSensorInputs();
+  wiiRemote.printIMUdata();
   delay(100);
 }

@@ -9,7 +9,7 @@
 typedef enum {
     STATUS_COMPLETE = 0,
     STATUS_ERROR    = 1,
-} status_t;
+} err_status_t;
 
 #define CRITICAL_SECTION_START() noInterrupts()
 #define CRITICAL_SECTION_END()   interrupts()
