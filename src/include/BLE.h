@@ -10,9 +10,10 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
+
+#include "generic_types.h"
 #include "IMU_Sensor.h"
 #include "generic_types.h"
-#include <string>
 
 /** MACROS */
 
@@ -29,20 +30,22 @@ class BLE
 {
 public:
 
-    BLE(std::string name) { deviceName = name; };
+    BLE(const char* name) { deviceName = name; };
 
-    void initBle();
+    void initBle(void);
 
-    void updateButtonInputValue(uint32_t buttonInputs);
+    void startAdvertising(void);
+    
+    void notifyCharacterisitic(BLECharacteristic* pCharacterisitic);
 
-    void updateSensorInputValue(AccelData accelData, GyroData gyroData);
+    // void updateButtonInputValue(uint32_t buttonInputs);
+
+    // void updateSensorInputValue(AccelData accelData, GyroData gyroData);
+
+    BLEServer* pServer = nullptr;
+
+    BLEService *pService = nullptr;
 
 private:
-    std::string deviceName;
-    BLEServer* pServer = nullptr;
-    BLECharacteristic* pButtonInputCharacteristic = nullptr;
-    BLECharacteristic* pSensorInputCharacteristic = nullptr;
-    BLEDescriptor *pDescr = nullptr;
-    BLE2902 *pButtonInputNotifier = nullptr;
-    BLE2902 *pSensorInputNotifier = nullptr;
+    const char* deviceName;
 };

@@ -9,7 +9,7 @@
 
 err_status_t IMU_Sensor::initImuSensor()
 {
-    Wire.begin();
+    Wire.begin(sda, scl);
     Wire.setClock(400000); //400khz clock
     while (!Serial) {
         ;
@@ -82,18 +82,19 @@ err_status_t IMU_Sensor::initImuSensor()
 
 void IMU_Sensor::printSensorData()
 {
-    IMU.update();
-    IMU.getAccel(&accelData);
-    Serial.print(accelData.accelX);
-    Serial.print("\t");
-    Serial.print(accelData.accelY);
-    Serial.print("\t");
-    Serial.print(accelData.accelZ);
-    Serial.print("\t");
-    IMU.getGyro(&gyroData);
-    Serial.print(gyroData.gyroX);
-    Serial.print("\t");
-    Serial.print(gyroData.gyroY);
-    Serial.print("\t");
-    Serial.println(gyroData.gyroZ);
+    // Wire.begin(sda, scl);
+    // IMU.update();
+    // IMU.getAccel(&accelData);
+    // Serial.print(accelData.accelX);
+    // Serial.print("\t");
+    // Serial.print(accelData.accelY);
+    // Serial.print("\t");
+    // Serial.print(accelData.accelZ);
+    // Serial.print("\t");
+    // IMU.getGyro(&gyroData);
+    // Serial.print(gyroData.gyroX);
+    // Serial.print("\t");
+    // Serial.print(gyroData.gyroY);
+    // Serial.print("\t");
+    // Serial.println(gyroData.gyroZ);
 }

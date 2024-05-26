@@ -89,23 +89,62 @@ void WiiRemote::initButtonPins(void)
     attachInterrupt(digitalPinToInterrupt(DPAD_RIGHT_PIN), []() { WiiRemote::buttonPressedIRQHandler(DPAD_RIGHT_PIN); }, CHANGE);
 }
 
+void WiiRemote::createBleCharacteristics(void)
+{
+    if (ble->pService != nullptr) {
+        // Add Button Input characteristic and notifier
+        pButtonInputCharacteristic = ble->pService->createCharacteristic (
+                                                        BUTTON_INPUT_CHARACTERISTIC_UUID,
+                                                        BLECharacteristic::PROPERTY_NOTIFY
+                                                    );
+        
+        pButtonInputNotifier = new BLE2902();
+        pButtonInputNotifier->setNotifications(true);
+        pButtonInputCharacteristic->addDescriptor(pButtonInputNotifier);
+
+        // Add Sensor Input characteristic and notifier
+        pSensorInputCharacteristic = ble->pService->createCharacteristic (
+                                                        SENSOR_INPUT_CHARACTERISTIC_UUID,
+                                                        BLECharacteristic::PROPERTY_NOTIFY
+                                                    );
+
+
+        pSensorInputNotifier = new BLE2902();
+        pSensorInputNotifier->setNotifications(true);
+        pSensorInputCharacteristic->addDescriptor(pSensorInputNotifier);
+    }
+}
+
 void WiiRemote::initWiiRemote(void)
 {
-    imu.initImuSensor();
-    ble.initBle();
+    wiiRemoteImu.initImuSensor();
     initButtonPins();
+    createBleCharacteristics();
 }
 
 void WiiRemote::updateButtonInputs(void)
 {
     // Could maybe place in header file depending on Nunchuck implementation
-    ble.updateButtonInputValue(WiiRemote::buttonInput);
+    pButtonInputCharacteristic->setValue(WiiRemote::buttonInput);
+    ble->notifyCharacterisitic(pButtonInputCharacteristic);
 }
 
 void WiiRemote::updateSensorInputs(void)
 {
-    imu.IMU.update();
-    imu.IMU.getAccel(&imu.accelData);
-    imu.IMU.getGyro(&imu.gyroData);
-    ble.updateSensorInputValue(imu.accelData, imu.gyroData);
+    wiiRemoteImu.IMU.update();
+    wiiRemoteImu.IMU.getAccel(&wiiRemoteImu.accelData);
+    wiiRemoteImu.IMU.getGyro(&wiiRemoteImu.gyroData);
+
+    // Consolidate both sensor data into one characteristic
+    // to minimize characteristic overhead
+    uint8_t accelGyroDataBytes[ACCEL_GYRO_DATA_SIZE];
+
+    // Load the acceleration data
+    memcpy(accelGyroDataBytes, &wiiRemoteImu.accelData, ACCEL_DATA_STRUCT_SIZE);
+    // Load the gyroscope data
+    memcpy(accelGyroDataBytes + ACCEL_DATA_STRUCT_SIZE, &wiiRemoteImu.gyroData, GYRO_DATA_STRUCT_SIZE);
+    // Transmit the data
+    pSensorInputCharacteristic->setValue(accelGyroDataBytes, ACCEL_GYRO_DATA_SIZE);
+
+    ble->notifyCharacterisitic(pSensorInputCharacteristic);
 }

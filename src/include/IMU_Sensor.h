@@ -22,6 +22,9 @@ class IMU_Sensor
 {
 public:
 
+    IMU_Sensor(Pins_t sda, Pins_t scl)
+        : sda(sda), scl(scl) {}
+
     err_status_t initImuSensor();
 
     void printSensorData();
@@ -33,4 +36,8 @@ public:
     GyroData gyroData;
 
     calData calib = { 0 };  //Calibration data
+
+private:
+    Pins_t sda;
+    Pins_t scl;
 };

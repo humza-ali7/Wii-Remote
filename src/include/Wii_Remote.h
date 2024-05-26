@@ -28,8 +28,6 @@ typedef enum Button_Mapping {
     DS4_SQUARE   = 0x8000U,
 } Button_Mapping_t;
 
-typedef uint8_t Pins_t;
-
 #define BUTTON_A_PIN     (Pins_t)32U
 #define BUTTON_B_PIN     (Pins_t)23U
 #define BUTTON_1_PIN     (Pins_t)19U
@@ -51,7 +49,8 @@ class WiiRemote
 {
 public:
 
-    WiiRemote() : ble("Wii Remote") {};
+    WiiRemote(BLE* ble, Pins_t sda, Pins_t scl)
+        : ble(ble), wiiRemoteImu(sda, scl) {};
 
     static void buttonPressedIRQHandler(Pins_t pin);
 
@@ -59,15 +58,23 @@ public:
 
     void initButtonPins(void);
 
+    void createBleCharacteristics(void);
+
     void updateButtonInputs(void);
 
     void updateSensorInputs(void);
 
-    void printIMUdata(void) { imu.printSensorData(); }
-
-    BLE ble{"Wii Remote"};
+    void printIMUdata(void) { wiiRemoteImu.printSensorData(); }
 
 private:
+
+    BLE* ble = nullptr;
+
+    BLECharacteristic* pButtonInputCharacteristic = nullptr;
+    BLECharacteristic* pSensorInputCharacteristic = nullptr;
+    BLEDescriptor *pDescr = nullptr;
+    BLE2902 *pButtonInputNotifier = nullptr;
+    BLE2902 *pSensorInputNotifier = nullptr;
     
     static std::vector<Button_Mapping_t> activeButtons;    
 
@@ -75,5 +82,5 @@ private:
 
     static uint32_t buttonInput;
 
-    IMU_Sensor imu;
+    IMU_Sensor wiiRemoteImu;
 };

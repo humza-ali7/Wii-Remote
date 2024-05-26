@@ -13,3 +13,5 @@ typedef enum {
 
 #define CRITICAL_SECTION_START() noInterrupts()
 #define CRITICAL_SECTION_END()   interrupts()
+
+typedef uint8_t Pins_t;
