@@ -15,37 +15,61 @@
 #include "IMU_Sensor.h"
 #include "generic_types.h"
 
-/** MACROS */
-
-// BLE Service and Characteristic UUID values
-#define SERVICE_UUID                      "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define BUTTON_INPUT_CHARACTERISTIC_UUID  "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define SENSOR_INPUT_CHARACTERISTIC_UUID  "eb854de2-f0b3-48bf-90ca-1f2a85ef29c8"
-
-#define ACCEL_DATA_STRUCT_SIZE            (size_t)sizeof(AccelData)
-#define GYRO_DATA_STRUCT_SIZE             (size_t)sizeof(GyroData)
-#define ACCEL_GYRO_DATA_SIZE              (size_t)(ACCEL_DATA_STRUCT_SIZE + GYRO_DATA_STRUCT_SIZE)
+/** BLE Service UUID */
+#define SERVICE_UUID "06a1ef1c-d8f5-4839-bf3a-cf1deed694d2"
 
 class BLE 
 {
 public:
+    /**
+     * @brief Constructor for the BLE class.
+     *
+     * Constructs a new instance of the BLE class with a specified name for the
+     * BLE device connection. This class will be used to create BLE,
+     * characteristics, advertise, and transmit notification data.
+     *
+     *
+     * @param[in] deviceName Name of the BLE device.
+     */
+    BLE(const char* deviceName) : deviceName(deviceName) {};
 
-    BLE(const char* name) { deviceName = name; };
-
+    /**
+     * @brief Initializes the BLE connection server and service.
+     */
     void initBle(void);
 
-    void startAdvertising(void);
-    
-    void notifyCharacterisitic(BLECharacteristic* pCharacterisitic);
+    /**
+     * @brief Starts advertising for the BLE service.
+     */
+    status_t startAdvertising(void);
 
-    // void updateButtonInputValue(uint32_t buttonInputs);
+    /**
+     * @brief Creates a BLE characteristic.
+     *
+     * @param[in] characteristicUuid The designated UUID of the characteristic.
+     * @param[in, out] pCharacteristic Pointer to a BLE characteristic object.
+     * @param[in, out] pNotifier Pointer to a BLE notifier object.
+     *
+     * @return Status code indicating the result of the call.
+     */
+    status_t createCharacteristic(const char* characteristicUuid,
+                                  BLECharacteristic*& pCharacteristic,
+                                  BLE2902*& pNotifier);
 
-    // void updateSensorInputValue(AccelData accelData, GyroData gyroData);
+    /**
+     * @brief Notifies the data stored in a characteristic.
+     *
+     * @param[in] pCharacterisitic Pointer to a BLE characteristic object.
+     */
+    void notifyCharacterisitic(BLECharacteristic* pCharacteristic);
 
+    /** Pointer to a BLE service object. */
     BLEServer* pServer = nullptr;
 
-    BLEService *pService = nullptr;
+    /** Pointer to a BLE server object. */
+    BLEService* pService = nullptr;
 
 private:
+    /** Name of the BLE device. */
     const char* deviceName;
 };

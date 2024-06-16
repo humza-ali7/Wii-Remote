@@ -4,13 +4,12 @@
  * @author Humza Ali
  */
 
-#include "include/BLE.h"
 #include "Arduino.h"
+#include "include/BLE.h"
 
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
-uint32_t value = 0;
-uint32_t value2 = 0;
+// Indicates whether there is a device that is currently paired
+// with the ESP32 device
+static bool deviceConnected = false;
 
 class MyServerCallbacks : public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
@@ -33,39 +32,88 @@ void BLE::initBle()
 
     // Create the BLE Service
     pService = pServer->createService(SERVICE_UUID);
+
+#if SERIAL_OUTPUT_LOGGING
+    Serial.println("BLE server and service has been initialized.");
+#endif
 }
 
-void BLE::startAdvertising(void)
+status_t BLE::createCharacteristic(const char* characteristicUuid,
+                                    BLECharacteristic*& pCharacteristic,
+                                    BLE2902*& pNotifier)
 {
+    // Null check
+    if (pService == nullptr) {
+        #if DEBUG
+        Serial.println("pService is NULL in BLE::createCharacteristic().");
+        #endif
+        return STATUS_NULL_POINTER;
+    }
+    // Create a characteristic to notify with
+    pCharacteristic = pService->createCharacteristic (
+                                    characteristicUuid,
+                                    BLECharacteristic::PROPERTY_NOTIFY
+                                );
+    // Initialize the notifier
+    pNotifier = new BLE2902();
+    pNotifier->setNotifications(true);
+    pCharacteristic->addDescriptor(pNotifier);
+
+#if SERIAL_OUTPUT_LOGGING
+    Serial.print("Success initializing Characteristic with UUID:");
+    Serial.println(characteristicUuid);
+#endif
+    return STATUS_COMPLETE;
+}
+
+status_t BLE::startAdvertising(void)
+{
+    if (pService == nullptr) {
+        #if DEBUG
+        Serial.println("pService is NULL in BLE::startAdvertising().");
+        #endif
+        return STATUS_NULL_POINTER;
+    }
+#if SERIAL_OUTPUT_LOGGING
+    Serial.println("Preparing to Advertise...");
+#endif
     // Start the service
     pService->start();
-
-    // Start advertising
+    // Initialize the advertiser
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->setScanResponse(false);
-    pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
+    pAdvertising->setMinPreferred(0x0);
+    // Start advertising now that everything is initialized
     BLEDevice::startAdvertising();
-    Serial.println("Waiting a client connection to notify...");
+#if SERIAL_OUTPUT_LOGGING
+    Serial.println("Started Adverstising.");
+#endif
+
+    return STATUS_COMPLETE;
 }
 
-void BLE::notifyCharacterisitic(BLECharacteristic* pCharacterisitic)
+void BLE::notifyCharacterisitic(BLECharacteristic* pCharacteristic)
 {
-    // notify changed value
+    // Null check
+    if (pCharacteristic == nullptr) {
+        #if DEBUG
+        Serial.println("pCharacteristic is NULL in BLE::notifyCharacterisitic().");
+        delay(100);
+        #endif
+        return;
+    }
+    // Notify the characteristic value of pCharacteristic
+    // if there is a device connected
     if (deviceConnected) {
-        pCharacterisitic->notify();
-        delay(25);
+        pCharacteristic->notify();
+        delay(10);
     }
-    // disconnecting
-    if (!deviceConnected && oldDeviceConnected) {
-        delay(500); // give the bluetooth stack the chance to get things ready
-        pServer->startAdvertising(); // restart advertising
-        Serial.println("start advertising");
-        oldDeviceConnected = deviceConnected;
+#if SERIAL_OUTPUT_LOGGING
+    else {
+        Serial.println("No device currently connected.");
+        delay(500);
     }
-    // connecting
-    if (deviceConnected && !oldDeviceConnected) {
-        // do stuff here on connecting
-        oldDeviceConnected = deviceConnected;
-    }
+#endif
+    return;
 }

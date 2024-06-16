@@ -6,12 +6,25 @@
 
 #pragma once
 
+/**
+ * @enum status_t
+ * @brief Status codes used to indicate the result of a task.
+ */
 typedef enum {
-    STATUS_COMPLETE = 0,
-    STATUS_ERROR    = 1,
-} err_status_t;
+    /** Indicates a failure in initializing an IMU. */
+    STATUS_IMU_INIT_FAILURE = -1,
+    /** Indicates completion of a task. */
+    STATUS_COMPLETE         = 0,
+    /** Indicates a NULL pointer that should've been set. */
+    STATUS_NULL_POINTER     = 1,
+} status_t;
 
-#define CRITICAL_SECTION_START() noInterrupts()
-#define CRITICAL_SECTION_END()   interrupts()
+// Set to 1 to print logs through Serial output
+#define SERIAL_OUTPUT_LOGGING 0
+#if SERIAL_OUTPUT_LOGGING
+// Set to 1 to print debug data
+#define DEBUG 0
+#endif
 
+/** Typedef used for representing GPIO pin numbers.  */
 typedef uint8_t Pins_t;
