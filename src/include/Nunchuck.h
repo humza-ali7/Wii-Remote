@@ -111,7 +111,7 @@ public:
     /**
      * @brief Prints the IMU data recorded from the Nunchuck IMU Sensor.
      */
-    void printIMUdata(void) override { pNunchuckImu.printSensorData(); }
+    void printIMUdata(void) override { pNunchuckImu->printSensorData(); }
 #endif
 
 private:
