@@ -119,7 +119,7 @@ public:
     /**
      * @brief Prints the IMU data recorded from the Wii Remote IMU Sensor.
      */
-    void printIMUdata(void) override { pWiiRemoteImu.printSensorData(); }
+    void printIMUdata(void) override { pWiiRemoteImu->printSensorData(); }
 #endif //DEBUG
 
 private:
